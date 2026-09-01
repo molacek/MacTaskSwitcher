@@ -21,7 +21,11 @@ final class OverlayPanel {
         panel.backgroundColor = .clear
         panel.hasShadow = true
         panel.hidesOnDeactivate = false
-        panel.ignoresMouseEvents = true
+        // Needs to see mouse-moved events so the row can be hovered. The panel is
+        // still `.nonactivatingPanel` and never made key, so this does not
+        // activate our agent app.
+        panel.ignoresMouseEvents = false
+        panel.acceptsMouseMovedEvents = true
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary,
                                     .fullScreenAuxiliary, .ignoresCycle]
         panel.contentView = view
@@ -37,6 +41,12 @@ final class OverlayPanel {
         )
         panel.setFrame(NSRect(origin: origin, size: size), display: true)
         panel.orderFrontRegardless()
+    }
+
+    /// Forwarded to the content view: fires with the icon slot under the pointer.
+    var onHoverSelect: ((Int) -> Void)? {
+        get { view.onHoverSelect }
+        set { view.onHoverSelect = newValue }
     }
 
     func select(_ index: Int) { view.highlight(index) }

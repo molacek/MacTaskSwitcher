@@ -18,6 +18,11 @@ final class OverlayView: NSView {
     private var targets: [SwitchTarget] = []
     private var selected = 0
 
+    /// Called when the pointer moves over a different app icon. The controller
+    /// owns the selection index, so the view only reports the hovered slot and
+    /// lets `highlight(_:)` come back around.
+    var onHoverSelect: ((Int) -> Void)?
+
     func configure(targets: [SwitchTarget], selected: Int) {
         self.targets = targets
         self.selected = selected
@@ -42,6 +47,41 @@ final class OverlayView: NSView {
     }
 
     override var isFlipped: Bool { false }
+
+    // MARK: - Mouse hover
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways],
+            owner: self,
+            userInfo: nil
+        ))
+    }
+
+    override func mouseEntered(with event: NSEvent) { hover(event) }
+    override func mouseMoved(with event: NSEvent) { hover(event) }
+
+    private func hover(_ event: NSEvent) {
+        guard let i = iconIndex(at: convert(event.locationInWindow, from: nil)),
+              i != selected else { return }
+        onHoverSelect?(i)
+    }
+
+    /// Icon slot under `point` (view coordinates), or nil. Hit rects are widened
+    /// into the inter-icon gaps so the selection tracks the pointer smoothly.
+    private func iconIndex(at point: NSPoint) -> Int? {
+        let iconY = Metric.bottomInset + Metric.labelHeight + Metric.labelGap
+        for i in targets.indices {
+            let x = Metric.padding + CGFloat(i) * (Metric.icon + Metric.spacing)
+            let rect = NSRect(x: x, y: iconY, width: Metric.icon, height: Metric.icon)
+                .insetBy(dx: -Metric.spacing / 2, dy: -Metric.labelGap / 2)
+            if rect.contains(point) { return i }
+        }
+        return nil
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         // Panel background.

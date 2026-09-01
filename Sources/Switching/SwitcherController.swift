@@ -11,6 +11,16 @@ final class SwitcherController {
     private var index = 0
     private var active = false
 
+    init() {
+        // Hovering an icon just moves the selection; the pending `.commit` on
+        // Cmd-release then activates whatever is selected.
+        overlay.onHoverSelect = { [weak self] hovered in
+            guard let self, self.active, self.targets.indices.contains(hovered) else { return }
+            self.index = hovered
+            self.overlay.select(hovered)
+        }
+    }
+
     func handle(_ action: SwitchAction) {
         switch action {
         case .advance(let reverse):
