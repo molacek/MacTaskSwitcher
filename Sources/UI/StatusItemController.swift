@@ -1,0 +1,43 @@
+import AppKit
+
+/// The only persistent UI. A menu-bar item with "Launch at Login" and "Quit".
+final class StatusItemController: NSObject {
+    var onQuit: () -> Void = {}
+
+    private var item: NSStatusItem?
+
+    func install() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        item.button?.image = NSImage(
+            systemSymbolName: "rectangle.on.rectangle.angled",
+            accessibilityDescription: "MacTaskSwitcher"
+        )
+
+        let menu = NSMenu()
+
+        let login = NSMenuItem(title: "Launch at Login",
+                               action: #selector(toggleLogin(_:)),
+                               keyEquivalent: "")
+        login.target = self
+        login.state = LoginItem.isEnabled ? .on : .off
+        menu.addItem(login)
+
+        menu.addItem(.separator())
+
+        let quit = NSMenuItem(title: "Quit MacTaskSwitcher",
+                              action: #selector(quit),
+                              keyEquivalent: "q")
+        quit.target = self
+        menu.addItem(quit)
+
+        item.menu = menu
+        self.item = item
+    }
+
+    @objc private func toggleLogin(_ sender: NSMenuItem) {
+        LoginItem.toggle()
+        sender.state = LoginItem.isEnabled ? .on : .off
+    }
+
+    @objc private func quit() { onQuit() }
+}
