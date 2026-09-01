@@ -6,13 +6,16 @@ import AppKit
 ///   3. `StatusItemController` – the only visible control surface.
 ///   4. `PermissionsMonitor` – first-launch permission request + polling.
 final class AppController: NSObject, NSApplicationDelegate {
-    private let switcher = SwitcherController()
+    private let settings = Settings()
+    private lazy var switcher = SwitcherController(settings: settings)
+    private lazy var settingsWindow = SettingsWindowController(settings: settings)
     private let statusItem = StatusItemController()
     private let interceptor = HotkeyInterceptor()
     private var permissions: PermissionsMonitor?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem.onQuit = { NSApp.terminate(nil) }
+        statusItem.onOpenSettings = { [settingsWindow] in settingsWindow.show() }
         statusItem.install()
 
         interceptor.onAction = { [switcher] action in

@@ -6,15 +6,19 @@ import CoreGraphics
 /// `CGWindowListCopyWindowInfo` returns windows front-to-back. We keep only
 /// "normal" windows (layer 0, non-trivial size, visible), map each window's
 /// CoreGraphics rect (origin top-left of the primary screen) into Cocoa
-/// coordinates, and keep it if at least half its area is on the target screen.
-/// The first window seen for a PID is its frontmost window on that screen.
+/// coordinates, and — for the `.currentDisplay` scope — keep it only if at least
+/// half its area is on `screen`. The first window seen for a PID is its
+/// frontmost window (on that screen, when the display filter applies).
 enum WindowEnumerator {
-    static func appTargets(on screen: NSScreen, mru: [pid_t]) -> [SwitchTarget] {
+    static func appTargets(on screen: NSScreen, scope: SwitchScope, mru: [pid_t]) -> [SwitchTarget] {
         let selfPID = ProcessInfo.processInfo.processIdentifier
         let primaryHeight = NSScreen.screens
             .first(where: { $0.frame.origin == .zero })?.frame.height ?? screen.frame.height
 
-        let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+        // `.allWindows` drops `.optionOnScreenOnly` so windows on other spaces
+        // are included; the other scopes stay on-screen-only.
+        var options: CGWindowListOption = [.excludeDesktopElements]
+        if scope != .allWindows { options.insert(.optionOnScreenOnly) }
         guard let list = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] else {
             return []
         }
@@ -37,11 +41,13 @@ enum WindowEnumerator {
             let x = b["X"] ?? 0, y = b["Y"] ?? 0, w = b["Width"] ?? 0, h = b["Height"] ?? 0
             guard w > 48, h > 48 else { continue }
 
-            let cocoa = CGRect(x: x, y: primaryHeight - y - h, width: w, height: h)
-            let overlap = cocoa.intersection(screen.frame)
-            guard !overlap.isNull,
-                  overlap.width * overlap.height >= cocoa.width * cocoa.height * 0.5
-            else { continue }
+            if scope == .currentDisplay {
+                let cocoa = CGRect(x: x, y: primaryHeight - y - h, width: w, height: h)
+                let overlap = cocoa.intersection(screen.frame)
+                guard !overlap.isNull,
+                      overlap.width * overlap.height >= cocoa.width * cocoa.height * 0.5
+                else { continue }
+            }
 
             guard let app = NSRunningApplication(processIdentifier: pid),
                   app.activationPolicy == .regular

@@ -6,12 +6,15 @@ import AppKit
 final class SwitcherController {
     private let overlay = OverlayPanel()
     private let mru = MRUTracker()
+    private let settings: Settings
 
     private var targets: [SwitchTarget] = []
     private var index = 0
     private var active = false
 
-    init() {
+    init(settings: Settings) {
+        self.settings = settings
+
         // Hovering an icon just moves the selection; the pending `.commit` on
         // Cmd-release then activates whatever is selected.
         overlay.onHoverSelect = { [weak self] hovered in
@@ -43,7 +46,7 @@ final class SwitcherController {
             targets = []
             return
         }
-        targets = WindowEnumerator.appTargets(on: screen, mru: mru.order())
+        targets = WindowEnumerator.appTargets(on: screen, scope: settings.scope, mru: mru.order())
         // Start on the current app (index 0). The `.advance` that opened this
         // session then steps to index 1 – the previously-focused app – so a
         // single Cmd+Tab + release toggles between the two most-recent apps.

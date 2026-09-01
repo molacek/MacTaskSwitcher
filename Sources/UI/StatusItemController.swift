@@ -1,8 +1,10 @@
 import AppKit
 
-/// The only persistent UI. A menu-bar item with "Launch at Login" and "Quit".
+/// The only persistent UI. A menu-bar item with "Settings…", "Launch at Login"
+/// and "Quit".
 final class StatusItemController: NSObject {
     var onQuit: () -> Void = {}
+    var onOpenSettings: () -> Void = {}
 
     private var item: NSStatusItem?
 
@@ -14,6 +16,14 @@ final class StatusItemController: NSObject {
         )
 
         let menu = NSMenu()
+
+        let settings = NSMenuItem(title: "Settings…",
+                                  action: #selector(openSettings),
+                                  keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
+
+        menu.addItem(.separator())
 
         let login = NSMenuItem(title: "Launch at Login",
                                action: #selector(toggleLogin(_:)),
@@ -38,6 +48,8 @@ final class StatusItemController: NSObject {
         LoginItem.toggle()
         sender.state = LoginItem.isEnabled ? .on : .off
     }
+
+    @objc private func openSettings() { onOpenSettings() }
 
     @objc private func quit() { onQuit() }
 }
