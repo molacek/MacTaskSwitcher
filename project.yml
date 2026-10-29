@@ -6,15 +6,19 @@ options:
   createIntermediateGroups: true
   xcodeVersion: "26.0"
 
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+
 settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     CODE_SIGN_STYLE: Automatic
-    # Set this (or pass DEVELOPMENT_TEAM=XXXXXXXXXX on the xcodebuild command line)
-    # to produce a signed, notarizable Release build.
-    DEVELOPMENT_TEAM: ""
+    # DEVELOPMENT_TEAM is deliberately not set here (a value here would override
+    # the xcconfig). Put your team in the git-ignored Config/Local.xcconfig – see
+    # Config/Local.xcconfig.example – or pass DEVELOPMENT_TEAM=... to xcodebuild.
     ENABLE_HARDENED_RUNTIME: YES
     DEAD_CODE_STRIPPING: YES
     SWIFT_STRICT_CONCURRENCY: minimal

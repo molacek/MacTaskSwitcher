@@ -1,0 +1,3 @@
+// Committed base config. Per-developer signing lives in Local.xcconfig, which is
+// git-ignored; the `?` makes the include optional so a fresh clone still builds.
+#include? "Local.xcconfig"

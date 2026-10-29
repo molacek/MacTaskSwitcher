@@ -29,6 +29,13 @@ open ~/Library/Developer/Xcode/DerivedData/MacTaskSwitcher-*/Build/Products/Debu
 The `.xcodeproj` is git-ignored and generated; edit `project.yml`, not the
 project file. `xcodegen` is installed via Homebrew.
 
+Signing is per-developer: copy `Config/Local.xcconfig.example` to the
+git-ignored `Config/Local.xcconfig` and set your `DEVELOPMENT_TEAM` (a free
+Personal Team is enough for Debug). With it, drop `CODE_SIGNING_ALLOWED=NO` from
+the build command; the stable signature keeps the Accessibility / Input
+Monitoring grants across rebuilds. Don't set `DEVELOPMENT_TEAM` in `project.yml`
+— settings there override the xcconfig.
+
 ### Production build
 
 ```sh
