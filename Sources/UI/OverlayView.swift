@@ -13,10 +13,17 @@ final class OverlayView: NSView {
         static let labelHeight: CGFloat = 16
         static let labelGap: CGFloat = 12      // clear space between label and icons
         static let corner: CGFloat = 18
+        /// How far (points) the pointer must travel from where it was when the
+        /// overlay appeared before hovering may change the selection. Keeps a
+        /// resting or slightly bumped mouse from overriding the Cmd+Tab choice.
+        static let hoverThreshold: CGFloat = 24
     }
 
     private var targets: [SwitchTarget] = []
     private var selected = 0
+    /// Pointer position (global Cocoa coordinates) when the overlay was shown;
+    /// nil once it has moved past `Metric.hoverThreshold` and hover is live.
+    private var hoverAnchor: NSPoint?
 
     /// Called when the pointer moves over a different app icon. The controller
     /// owns the selection index, so the view only reports the hovered slot and
@@ -26,6 +33,7 @@ final class OverlayView: NSView {
     func configure(targets: [SwitchTarget], selected: Int) {
         self.targets = targets
         self.selected = selected
+        hoverAnchor = NSEvent.mouseLocation
         invalidateIntrinsicContentSize()
         setFrameSize(intrinsicContentSize)
         needsDisplay = true
@@ -65,6 +73,11 @@ final class OverlayView: NSView {
     override func mouseMoved(with event: NSEvent) { hover(event) }
 
     private func hover(_ event: NSEvent) {
+        if let anchor = hoverAnchor {
+            let p = NSEvent.mouseLocation
+            guard hypot(p.x - anchor.x, p.y - anchor.y) >= Metric.hoverThreshold else { return }
+            hoverAnchor = nil
+        }
         guard let i = iconIndex(at: convert(event.locationInWindow, from: nil)),
               i != selected else { return }
         onHoverSelect?(i)
